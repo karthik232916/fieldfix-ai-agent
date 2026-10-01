@@ -1,0 +1,25 @@
+Warehouse Scanner Troubleshooting Guide
+
+Device: Warehouse Scanner
+
+Problem: Scanner does not turn on
+
+Possible Causes:
+1. Battery is completely discharged.
+2. Power cable is disconnected or damaged.
+3. Charging adapter is not supplying power.
+4. Power button is stuck or not responding.
+5. Device firmware may require an update.
+6. Internal hardware damage may have occurred.
+
+Troubleshooting Steps:
+1. Connect the scanner to its approved power adapter.
+2. Check whether the charging indicator appears.
+3. Leave the scanner charging for at least 15 minutes.
+4. Try turning the scanner on again.
+5. If the scanner still does not turn on, try a hard reset if supported by the device.
+6. Inspect the power cable and connector for visible damage.
+7. If there is physical damage, contact maintenance or vendor support.
+
+Safety:
+Do not open the scanner or perform internal electrical repairs unless authorized and qualified to do so.

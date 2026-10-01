@@ -1,98 +1,240 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { createIssue } from "@/services/api";
+import { useState } from "react";
+import {
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
 
 export default function HomeScreen() {
+  const [issue, setIssue] = useState("");
+  const [device, setDevice] = useState("");
+  const [severity, setSeverity] = useState("medium");
+  const [responseMessage, setResponseMessage] = useState("");
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>FieldFix AI 🔧</Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <Text style={styles.subtitle}>
+          AI-powered technical support for field engineers
+        </Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>What's wrong?</Text>
+
+          <Text style={styles.description}>
+            Describe the problem you're experiencing and FieldFix AI will help
+            diagnose it.
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Example: The warehouse scanner stopped working"
+            placeholderTextColor="#888"
+            multiline
+            value={issue}
+            onChangeText={setIssue}
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+          <Text style={styles.description}>Device Name</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Example: Warehouse Scanner"
+            placeholderTextColor="#888"
+            value={device}
+            onChangeText={setDevice}
+          />
+
+          <Text style={styles.fieldLabel}>Severity</Text>
+
+          <View style={styles.severityContainer}>
+            {["low", "medium", "high"].map((level) => (
+              <Pressable
+                key={level}
+                style={[
+                  styles.severityButton,
+                  severity === level && styles.severityButtonSelected,
+                ]}
+                onPress={() => setSeverity(level)}
+              >
+                <Text
+                  style={[
+                    styles.severityText,
+                    severity === level && styles.severityTextSelected,
+                  ]}
+                >
+                  {level.toUpperCase()}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Pressable
+            style={[styles.button, !issue.trim() && styles.buttonDisabled]}
+            disabled={!issue.trim()}
+            onPress={async () => {
+              try {
+                const result = await createIssue(issue, device, severity);
+
+                console.log("API response:", result);
+
+                setResponseMessage(result.message);
+              } catch (error) {
+                console.error("Failed to create issue:", error);
+                setResponseMessage(
+                  "Unable to connect to the FieldFix AI server.",
+                );
+              }
+            }}
+          >
+            <Text style={styles.buttonText}>Diagnose Issue</Text>
+          </Pressable>
+
+          {responseMessage ? (
+            <View style={styles.responseContainer}>
+              <Text style={styles.response}>{responseMessage}</Text>
+
+              <Text style={styles.responseDetail}>Device: {device}</Text>
+
+              <Text style={styles.responseDetail}>
+                Severity: {severity.toUpperCase()}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: "#F5F7FA",
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+
+  content: {
+    padding: 24,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
+
   title: {
-    textAlign: 'center',
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 8,
   },
-  code: {
-    textTransform: 'uppercase',
+
+  subtitle: {
+    fontSize: 16,
+    color: "#6B7280",
+    marginBottom: 32,
+    lineHeight: 24,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 24,
+    borderRadius: 16,
+  },
+
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#111827",
+    marginBottom: 10,
+  },
+
+  description: {
+    fontSize: 15,
+    color: "#6B7280",
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+
+  input: {
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 16,
+    color: "#111827",
+    textAlignVertical: "top",
+    marginBottom: 16,
+  },
+
+  button: {
+    backgroundColor: "#111827",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+
+  buttonDisabled: {
+    opacity: 0.4,
+  },
+
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  response: {
+    marginTop: 16,
+    fontSize: 15,
+    color: "#166534",
+    textAlign: "center",
+  },
+  fieldLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#111827",
+    marginBottom: 8,
+  },
+  severityContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 16,
+  },
+
+  severityButton: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  severityButtonSelected: {
+    backgroundColor: "#111827",
+    borderColor: "#111827",
+  },
+
+  severityText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+  },
+
+  severityTextSelected: {
+    color: "#FFFFFF",
+  },
+  responseContainer: {
+    marginTop: 16,
+  },
+
+  responseDetail: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "#4B5563",
+    textAlign: "center",
   },
 });
